@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"reflect"
 	"strconv"
 )
 
@@ -25,10 +24,6 @@ func newObjectType(object_type string) ObjectType {
 	} else {
 		panic("error type")
 	}
-}
-
-func (h Heap) heap_size() int {
-	return reflect.ValueOf(h).NumField()
 }
 
 func mark_phase() {
