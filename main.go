@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"reflect"
+	"strconv"
 )
 
 type Heap struct {
@@ -14,7 +15,7 @@ type Heap struct {
 
 type ObjectType string
 
-var roots []string
+var roots []int
 
 var heaps [HEAP_SIZE]Heap
 
@@ -30,7 +31,23 @@ func (h Heap) heap_size() int {
 	return reflect.ValueOf(h).NumField()
 }
 
-func mark_phase() {}
+func mark_phase() {
+	for i := range roots {
+		var heap_index = roots[i]
+		mark(&heaps[heap_index])
+	}
+}
+
+func mark(h *Heap) {
+	h.marked = true
+
+	if h.object_type == "Array" {
+		for i := range h.ptr {
+			index, _ := strconv.Atoi(h.ptr[i])
+			mark(&heaps[index])
+		}
+	}
+}
 
 func sweep_phase() {}
 
@@ -57,7 +74,7 @@ func init_global_vars() {
 
 	heaps[8] = Heap{marked: false, object_type: int_type, ptr: []string{"88888"}, size: 5}
 
-	heaps[4] = Heap{marked: false, object_type: int_type, ptr: []string{"10"}, size: 5}
+	heaps[4] = Heap{marked: false, object_type: int_type, ptr: []string{"44444"}, size: 5}
 
 	// rootsから辿れない
 	heaps[2] = Heap{marked: false, object_type: array_type, ptr: []string{"3", "9"}, size: 2}
@@ -66,7 +83,7 @@ func init_global_vars() {
 
 	heaps[1] = Heap{marked: false, object_type: int_type, ptr: []string{"11111"}, size: 5}
 
-	roots = []string{"0", "8", "10"}
+	roots = []int{0, 4, 8, 10}
 }
 
 func print_global_vars() {
@@ -75,15 +92,13 @@ func print_global_vars() {
 		fmt.Printf("--- heap %d ---\n", i)
 		fmt.Println(heaps[i])
 	}
-
-	fmt.Println("### roots ###")
-	for i := range roots {
-		fmt.Printf("--- root %d ---\n", i)
-		fmt.Println(roots[i])
-	}
 }
 
 func main() {
 	init_global_vars()
+	print_global_vars()
+	mark_phase()
+
+	fmt.Println("### mark phase done ###")
 	print_global_vars()
 }
