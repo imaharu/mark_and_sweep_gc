@@ -6,15 +6,18 @@ import (
 )
 
 type Heap struct {
-	marked      bool
-	object_type ObjectType
-	ptr         []string // TODO: ObjectTypeがIntの時は、intにしたい
-	size        int
+	marked          bool
+	object_type     ObjectType
+	ptr             []string // TODO: ObjectTypeがIntの時は、intにしたい
+	size            int
+	next_free_index int
 }
 
 type ObjectType string
 
 var roots []int
+
+var free_list int
 
 var heaps [HEAP_SIZE]Heap
 
@@ -44,7 +47,23 @@ func mark(h *Heap) {
 	}
 }
 
-func sweep_phase() {}
+func sweep_phase() {
+	for i := range heaps {
+		if heaps[i].marked == true {
+			heaps[i].marked = false
+		} else {
+			free_obj(&heaps[i])
+			// TODO: 最初のobjectがmarked: trueだった場合、意図しないHeapがfreelistの対象になってしまう
+			// https://github.com/ruby/ruby/blob/v1_7_1/gc.c#L689-L710
+			heaps[i].next_free_index = free_list
+			free_list = i
+		}
+	}
+}
+
+func free_obj(h *Heap) {
+	h.ptr = []string{""}
+}
 
 const (
 	HEAP_SIZE = 11
@@ -92,8 +111,12 @@ func print_global_vars() {
 func main() {
 	init_global_vars()
 	print_global_vars()
-	mark_phase()
 
+	mark_phase()
 	fmt.Println("### mark phase done ###")
+	print_global_vars()
+
+	sweep_phase()
+	fmt.Println("### sweep phase done ###")
 	print_global_vars()
 }
