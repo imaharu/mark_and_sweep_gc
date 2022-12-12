@@ -5,7 +5,7 @@ import (
 	"strconv"
 )
 
-type Heap struct {
+type Object struct {
 	marked          bool
 	object_type     ObjectType
 	ptr             []string // TODO: ObjectTypeがIntの時は、intにしたい
@@ -19,7 +19,7 @@ var roots []int
 
 var free_list int
 
-var heaps [HEAP_SIZE]Heap
+var heap [HEAP_SIZE]Object
 
 func newObjectType(object_type string) ObjectType {
 	if object_type == "Array" || object_type == "Int" {
@@ -32,47 +32,46 @@ func newObjectType(object_type string) ObjectType {
 func mark_phase() {
 	for i := range roots {
 		var heap_index = roots[i]
-		mark(&heaps[heap_index])
+		mark(&heap[heap_index])
 	}
 }
 
-func mark(h *Heap) {
-	h.marked = true
+func mark(o *Object) {
+	o.marked = true
 
-	if h.object_type == "Array" {
-		for i := range h.ptr {
-			index, _ := strconv.Atoi(h.ptr[i])
-			mark(&heaps[index])
+	if o.object_type == "Array" {
+		for i := range o.ptr {
+			index, _ := strconv.Atoi(o.ptr[i])
+			mark(&heap[index])
 		}
 	}
 }
 
 func sweep_phase() {
-	for i := range heaps {
-		if heaps[i].marked == true {
-			heaps[i].marked = false
+	free_list = -1
+	for i := range heap {
+		if heap[i].marked == true {
+			heap[i].marked = false
 		} else {
-			free_obj(&heaps[i])
-			// TODO: 最初のobjectがmarked: trueだった場合、意図しないHeapがfreelistの対象になってしまう
-			// https://github.com/ruby/ruby/blob/v1_7_1/gc.c#L689-L710
-			heaps[i].next_free_index = free_list
+			free_obj(&heap[i])
+			heap[i].next_free_index = free_list
 			free_list = i
 		}
 	}
 }
 
-func free_obj(h *Heap) {
-	h.ptr = []string{""}
+func free_obj(o *Object) {
+	o.ptr = []string{""}
 }
 
 const (
-	HEAP_SIZE = 11
+	HEAP_SIZE = 10
 )
 
 func init_global_vars() {
-	h := Heap{marked: false, object_type: "Null", ptr: []string{""}, size: 0}
-	for i := range heaps {
-		heaps[i] = h
+	h := Object{marked: false, object_type: "Null", ptr: []string{""}, size: 0}
+	for i := range heap {
+		heap[i] = h
 	}
 
 	var array_type = newObjectType("Array")
@@ -81,30 +80,30 @@ func init_global_vars() {
 	// TODO: あとで絵を描く
 
 	// rootsから辿れる
-	heaps[0] = Heap{marked: false, object_type: array_type, ptr: []string{"5", "6", "7"}, size: 3}
-	heaps[5] = Heap{marked: false, object_type: int_type, ptr: []string{"55555"}, size: 5}
-	heaps[6] = Heap{marked: false, object_type: int_type, ptr: []string{"66666"}, size: 5}
-	heaps[7] = Heap{marked: false, object_type: int_type, ptr: []string{"77777"}, size: 5}
+	heap[0] = Object{marked: false, object_type: array_type, ptr: []string{"5", "6", "7"}, size: 3}
+	heap[5] = Object{marked: false, object_type: int_type, ptr: []string{"55555"}, size: 5}
+	heap[6] = Object{marked: false, object_type: int_type, ptr: []string{"66666"}, size: 5}
+	heap[7] = Object{marked: false, object_type: int_type, ptr: []string{"77777"}, size: 5}
 
-	heaps[8] = Heap{marked: false, object_type: int_type, ptr: []string{"88888"}, size: 5}
+	heap[8] = Object{marked: false, object_type: int_type, ptr: []string{"88888"}, size: 5}
 
-	heaps[4] = Heap{marked: false, object_type: int_type, ptr: []string{"44444"}, size: 5}
+	heap[4] = Object{marked: false, object_type: int_type, ptr: []string{"44444"}, size: 5}
 
 	// rootsから辿れない
-	heaps[2] = Heap{marked: false, object_type: array_type, ptr: []string{"3", "9"}, size: 2}
-	heaps[3] = Heap{marked: false, object_type: int_type, ptr: []string{"33333"}, size: 5}
-	heaps[9] = Heap{marked: false, object_type: int_type, ptr: []string{"99999"}, size: 5}
+	heap[2] = Object{marked: false, object_type: array_type, ptr: []string{"3", "9"}, size: 2}
+	heap[3] = Object{marked: false, object_type: int_type, ptr: []string{"33333"}, size: 5}
+	heap[9] = Object{marked: false, object_type: int_type, ptr: []string{"99999"}, size: 5}
 
-	heaps[1] = Heap{marked: false, object_type: int_type, ptr: []string{"11111"}, size: 5}
+	heap[1] = Object{marked: false, object_type: int_type, ptr: []string{"11111"}, size: 5}
 
-	roots = []int{0, 4, 8, 10}
+	roots = []int{0, 4, 8}
 }
 
 func print_global_vars() {
-	fmt.Println("### heaps ###")
-	for i := range heaps {
+	fmt.Println("### heap ###")
+	for i := range heap {
 		fmt.Printf("--- heap %d ---\n", i)
-		fmt.Println(heaps[i])
+		fmt.Println(heap[i])
 	}
 }
 
